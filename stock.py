@@ -9,7 +9,12 @@ from sklearn.preprocessing import MinMaxScaler
 st.title('AI Stock Trend Predictor')
 
 user_input = st.text_input('Enter Stock Ticker', 'AAPL')
-df = yf.download(user_input, start='2010-01-01', end='2023-12-31')
+df = yf.download(user_input, start='2010-01-01', end='2023-12-31', progress=False)
+
+if df.empty:
+    st.error("No data fetched. Please check the stock ticker symbol.")
+    st.stop()
+
 
 # Data Visualizations
 st.subheader('Data Summary (2010 - 2023)')
@@ -40,7 +45,15 @@ data_testing = pd.DataFrame(df['Close'][int(len(df)*0.70): int(len(df))])
 scaler = MinMaxScaler(feature_range=(0,1))
 past_100_days = data_training.tail(100)
 final_df = pd.concat([past_100_days, data_testing], ignore_index=True)
+
+final_df = final_df.dropna()
+
+if len(final_df) < 100:
+    st.error("Not enough data to generate predictions.")
+    st.stop()
+
 input_data = scaler.fit_transform(final_df)
+
 
 x_test, y_test = [], []
 for i in range(100, input_data.shape[0]):
@@ -63,4 +76,5 @@ plt.plot(y_predicted, 'r', label='Predicted Price')
 plt.xlabel('Time')
 plt.ylabel('Price')
 plt.legend()
+
 st.pyplot(fig3)
